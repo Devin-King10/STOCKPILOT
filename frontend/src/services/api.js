@@ -1,9 +1,10 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || ''
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/api\/?$/, '').replace(/\/+$/, '')
+const apiBase = rawApiUrl ? `${rawApiUrl}/api` : '/api'
 
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: apiBase,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 })
@@ -104,7 +105,7 @@ export const dispatchAPI = {
 // Analytics
 export const analyticsAPI = {
   getSummary: (params) => api.get('/analytics/summary', { params }),
-  exportCsv: (type) => `${API_URL}/api/analytics/export/${type}`,
+  exportCsv: (type) => `${apiBase}/analytics/export/${type}`,
 }
 
 // Users
