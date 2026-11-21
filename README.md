@@ -1,516 +1,272 @@
-# StockPilot – Smart Warehouse Order Fulfilment & Tracking System
+# STOCKPILOT – Warehouse Order Fulfilment System
 
-[![CI Pipeline](https://github.com/stockpilot/stockpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/stockpilot/stockpilot)
-[![React](https://img.shields.io/badge/Frontend-React_18_%2B_Vite-61DAFB?logo=react)](https://react.dev/)
-[![Flask](https://img.shields.io/badge/Backend-Python_Flask-000000?logo=flask)](https://flask.palletsprojects.com/)
-[![TailwindCSS](https://img.shields.io/badge/UI-TailwindCSS-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+**StockPilot** is a web-based Warehouse Order Fulfilment Management System designed to improve warehouse operations by reducing picking errors, improving packing accuracy, and tracking order dispatch activities.
 
-StockPilot is a modern, responsive, full-stack Warehouse Order Fulfilment and Inventory Tracking platform engineered to replace paper-based and manual warehouse operations with a centralized digital system. It provides real-time end-to-end visibility across the entire warehouse pipeline: **Order Intake → Picking → Packing → Dispatch → Delivery Tracking**.
+The application helps warehouse employees manage inventory locations, pick lists, packing verification, dispatch records, and order fulfilment stages through a centralized platform.
 
 ---
 
-## 📑 Table of Contents
-- [1. System Architecture & Tech Stack](#1-system-architecture--tech-stack)
-- [2. User Roles & Access Control](#2-user-roles--access-control)
-- [3. Demo Credentials](#3-demo-credentials)
-- [4. Order Lifecycle & Status Transitions](#4-order-lifecycle--status-transitions)
-- [5. Core Features & Functional Modules](#5-core-features--functional-modules)
-- [6. Project Structure](#6-project-structure)
-- [7. Local Development Setup](#7-local-development-setup)
-- [8. Running with Docker & Docker Compose](#8-running-with-docker--docker-compose)
-- [9. Automated Testing](#9-automated-testing)
-- [10. Production Deployment (Vercel & Render)](#10-production-deployment-vercel--render)
-- [11. API Endpoints Reference](#11-api-endpoints-reference)
+## Project Overview
 
----
+Traditional warehouse operations often depend on manual processes, which can result in incorrect product picking, packing mistakes, delayed dispatches, and poor order tracking.
 
-## 1. System Architecture & Tech Stack
+StockPilot aims to simplify these operations by providing a centralized digital platform that allows warehouse staff and managers to monitor and manage the entire order fulfilment process.
 
-```
-┌────────────────────────────────────────────────────────┐
-│                   Vercel / Browser                     │
-│  React 18 + Vite SPA  •  Tailwind CSS  •  Recharts     │
-└───────────────────────────┬────────────────────────────┘
-                            │ VITE_API_URL (REST JSON)
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│               Render / Container / Local               │
-│          Flask REST API  •  JWT Authentication         │
-│          SQLAlchemy ORM  •  Gunicorn / WSGI            │
-└───────────────────────────┬────────────────────────────┘
-                            │ SQL Connection
-                            ▼
-┌────────────────────────────────────────────────────────┐
-│                     Database                           │
-│     SQLite (Local Dev)  /  PostgreSQL (Production)     │
-└────────────────────────────────────────────────────────┘
-```
+## Key Features
 
-| Layer | Technology | Details |
-|---|---|---|
-| **Frontend** | React 18, Vite, JavaScript | High-performance SPA with fast HMR |
-| **Styling** | Tailwind CSS, Lucide React | Navy blue SaaS theme (`#0f1d30`), clean typography |
-| **Analytics & Charts** | Recharts | Interactive fulfillment lines, donut charts, accuracy bars |
-| **Routing & Network** | React Router v6, Axios | Protected routes, JWT request interceptor |
-| **Backend** | Python 3.12, Flask 3.0 | RESTful API architecture with modular Blueprints |
-| **ORM & Database** | SQLAlchemy 2.0, Flask-SQLAlchemy | Flexible connection: SQLite (local) or PostgreSQL (prod) |
-| **Security & Auth** | PyJWT, Werkzeug Security | Secure password hashing, HS256 tokens, RBAC middleware |
-| **DevOps & Containers**| Docker, Docker Compose, Nginx | Multi-stage frontend image, production Gunicorn backend |
-| **CI/CD** | GitHub Actions | Automated parallel Pytest and Vitest test suites |
+- **Order Management:** Manage and track customer orders.
+- **Bin Location Management:** Organize and manage warehouse storage locations.
+- **Picking Management:** Generate and manage pick lists for warehouse employees.
+- **Packing Verification:** Verify products before completing the packing process.
+- **Dispatch Management:** Maintain dispatch records and track dispatched orders.
+- **Order Tracking:** Monitor order progress through different fulfilment stages.
+- **Fulfilment Monitoring:** Track order processing activities.
+- **Performance Reporting:** Monitor order cycle time and fulfilment errors.
 
----
+## User Roles
 
-## 2. User Roles & Access Control
+| Role | Responsibilities |
+|---|---|
+| Warehouse Picker | Pick products based on assigned pick lists. |
+| Packing Staff | Verify products and complete packing activities. |
+| Dispatch Executive | Manage dispatch records and shipment activities. |
+| Warehouse Manager | Monitor warehouse operations and fulfilment performance. |
 
-StockPilot implements granular Role-Based Access Control (RBAC) across four dedicated warehouse personas:
+## Technology Stack
 
-1. **Warehouse Manager (`manager`)**
-   - Universal supervisory dashboard access.
-   - Manage users, roles, and account statuses.
-   - Inventory master control, product creation, stock adjustments, and bin assignments.
-   - Create customer orders, set priorities, and assign pickers.
-   - Comprehensive fulfillment analytics, cycle times, accuracy rates, and CSV exports.
-   - Incident resolution for warehouse discrepancies.
+### Frontend
+- React.js
+- JavaScript
+- HTML5
+- CSS3
+- Axios
 
-2. **Warehouse Picker (`picker`)**
-   - View assigned order pick lists and bin locations (e.g. `A-01-02`).
-   - Manual product barcode validation (prevents picking wrong items).
-   - Quantity verification against inventory stock.
-   - Report missing or damaged goods directly from picking bins.
-   - Live percentage progress bar for each order task.
+### Backend
+- Python
+- Flask
+- REST API
+- Gunicorn
 
-3. **Packing Staff (`packer`)**
-   - View orders with completed picking staged at the packing benches.
-   - Verify product SKU, quantity, and physical condition.
-   - Enforce mandatory 5-point safety and packing checklist before completing.
-   - Record package dimensions (L × W × H cm), weight (kg), and packaging type.
-   - Transition verified packages to the Dispatch Bay.
+### Database
+- MongoDB
 
-4. **Dispatch Executive (`dispatch`)**
-   - View queue of sealed packages ready for courier handover.
-   - Assign carriers (FedEx, DHL Express, UPS, BlueDart, USPS).
-   - Generate unique tracking numbers and record dispatch timestamps.
-   - Generate and print formatted Dispatch Summaries with barcode previews and signature slips.
-   - Search dispatch history and confirm delivery completion.
+### DevOps and Deployment
+- Git and GitHub
+- Render – Backend Deployment
+- Vercel – Frontend Deployment
+- Visual Studio Code
 
----
+## System Architecture
 
-## 3. Demo Credentials
+The application follows a client-server architecture.
 
-The database is pre-seeded with realistic warehouse orders, products, and user accounts. You can also click the **quick-fill demo buttons** on the login screen:
+1. The user interacts with the React frontend.
+2. The frontend sends HTTP requests using Axios.
+3. The Flask backend processes the API requests.
+4. The backend communicates with the MongoDB database.
+5. The requested information is returned to the frontend.
 
-| Role | Username | Password | Email | Access Scope |
-|---|---|---|---|---|
-| **Warehouse Manager** | `manager` | `Manager@123` | `manager@stockpilot.io` | Full System Access & Analytics |
-| **Warehouse Picker** | `picker` | `Picker@123` | `picker@stockpilot.io` | Picking Tasks & Barcode Validation |
-| **Packing Staff** | `packer` | `Packer@123` | `packer@stockpilot.io` | Packing Verification & Checklist |
-| **Dispatch Executive** | `dispatch` | `Dispatch@123` | `dispatch@stockpilot.io` | Courier Handover & Dispatch Slips |
+## Project Structure
 
-*Additional pre-seeded staff accounts for testing multi-worker analytics:*
-- Picker 2: `picker2` / `Picker@123` (Elena Rostov)
-- Packer 2: `packer2` / `Packer@123` (Thomas Miller)
-
----
-
-## 4. Order Lifecycle & Status Transitions
-
-StockPilot maintains timestamped history for all 12 operational lifecycle statuses:
-
-```
-[Order Created]
-       │
-       ▼ (Picker Assigned)
-[Picking Pending]
-       │
-       ▼ (Picker Begins Scanning)
-[Picking In Progress]
-       │
-       ▼ (All items verified & confirmed)
-[Picking Completed] ──► [Packing Pending]
-                              │
-                              ▼ (Packer Begins Inspection)
-                       [Packing In Progress]
-                              │
-                              ▼ (5-point checklist passed & weighed)
-                       [Packing Completed] ──► [Ready for Dispatch]
-                                                      │
-                                                      ▼ (Courier assigned & tracking generated)
-                                                 [Dispatched]
-                                                      │
-                                                      ▼ (Carrier delivery confirmation)
-                                                 [Delivered]
-
-* Any active order can be transitioned to [On Hold] and later [Resumed].
-* Cancelling an order [Cancelled] automatically releases all reserved inventory back into available stock.
-```
-
----
-
-## 5. Core Features & Functional Modules
-
-### 📊 1. Warehouse Management Dashboard
-- **8 Real-time KPI Cards**: Total Orders, Pending Orders, Orders Being Picked, Orders Awaiting Packing, Orders Ready for Dispatch, Dispatched Orders, Picking Errors, Packing Errors.
-- **Visual Analytics (Recharts)**: Daily order fulfillment trends, order status distribution pie chart, process accuracy bar graphs.
-- **Alert Banners**: High-visibility alerts for delayed orders (>24 hours) and low-stock inventory warnings.
-- **Live Feeds**: Recent orders table and chronological warehouse activity log.
-
-### 📦 2. Order Management
-- Order creation modal with dynamic multi-product line items.
-- Live stock availability verification and automatic inventory reservation (`available_qty` deductions, `reserved_qty` allocations).
-- Priority tagging: `LOW`, `NORMAL`, `HIGH`, `URGENT`.
-- Detailed Order View: Complete stage progress tracker, customer delivery details, line item fulfillment states, and audit trail of all status changes.
-- Supervisor actions: Assign/reassign pickers, place on hold, resume, or cancel.
-
-### 🏷️ 3. Inventory & Bin Location Management
-- Full product catalog with Name, SKU, Barcode, Category, Unit Price, Stock Levels, and Assigned Bins.
-- **Barcode Validation**: Manual barcode search and instant validation against database records.
-- Low-stock threshold alerts with color-coded warnings.
-- Stock adjustment utility: Log `IN`, `OUT`, `ADJUST`, and `DAMAGE` stock adjustments with automatic `InventoryTransaction` audit logging.
-- **Warehouse Bin Grid**: Visual storage layout categorized by zones (e.g. Zone A - High Velocity, Zone B - Apparel, Zone C - Hardware, Zone D - Fragile) displaying aisles, racks, shelves, capacity meters, and product counts.
-
-### 📋 4. Dedicated Picking Interface
-- Pickers view their assigned picking queue.
-- Pick list displays required quantities and prominent **Bin Locations** (e.g. `BIN: A-01-02`).
-- **Barcode Verification Step**: Pickers enter product barcode; system verifies against product SKU record before enabling quantity confirmation. Mismatches instantly trigger error logs.
-- Quantity picker prevents over-picking beyond ordered limits.
-- Flag discrepancies directly from bins (Missing Goods, Packaging Damage, Stock Shortage).
-- Real-time task completion progress percentage bar.
-
-### 📦 5. Dedicated Packing Dashboard
-- Displays orders with completed picking staged at packing benches.
-- Physical condition and SKU quantity verification for every line item.
-- **Mandatory 5-Point Packing Checklist**:
-  1. [x] Product quantity verified
-  2. [x] Product condition verified
-  3. [x] Correct order items confirmed
-  4. [x] Packaging completed
-  5. [x] Shipping label prepared
-- Package specification inputs: Dimensions ($L \times W \times H$ cm), weight ($kg$), and package type (Standard Box, Fragile Padded, Envelope, Pallet).
-- Enforces 100% checklist verification before order can be released to Dispatch.
-
-### 🚚 6. Dispatch Management & Printable Slips
-- Staging queue for all packed shipments.
-- Courier carrier assignment (FedEx Express, DHL Express, UPS Worldwide, BlueDart, USPS).
-- Tracking number generation and shipment cost recording.
-- **Printable Dispatch Summary**: Modal and print-optimized view with warehouse header, tracking barcodes, customer delivery addresses, line items breakdown, total valuation, and executive signature lines.
-- Carrier delivery confirmation tracking.
-
-### 📈 7. Analytics & Reports
-- Date range filtering: Today, Last 7 Days, Last 30 Days, All Time.
-- **KPI Metrics Calculated from Real Database Records**:
-  - Picking Accuracy: $\frac{\text{Correctly Picked Items}}{\text{Total Picked Items}} \times 100$
-  - Packing Accuracy: $\frac{\text{Correctly Packed Items}}{\text{Total Packed Items}} \times 100$
-  - Order Cycle Time: $\text{Dispatch Timestamp} - \text{Order Creation Timestamp}$ (in hours & minutes)
-  - Average picking time and average packing time.
-- Employee fulfillment leaderboard (pickers and packers completion rates).
-- **Downloadable CSV Reports**:
-  - `orders.csv` – Order history, customer details, valuations, and cycle times.
-  - `inventory.csv` – Stock catalog, available/reserved counts, and bin locations.
-  - `fulfillment.csv` – Picking task durations, picker names, and throughput.
-  - `errors.csv` – Detailed incident reports, severities, and resolution notes.
-
-### 🛡️ 8. Activity Logs & Error Monitoring
-- Centralized audit trail recording all warehouse actions, user IDs, roles, descriptions, and IP addresses.
-- Incident Resolution Desk: Filter unresolved warehouse discrepancies and record corrective action notes.
-
----
-
-## 6. Project Structure
-
-```
-stockpilot/
-│
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/         # Reusable UI widgets (KPICard, StatusBadge, Modal, TopNav, Sidebar, etc.)
-│   │   ├── context/            # AuthContext (JWT/RBAC) and ToastContext (alerts)
-│   │   ├── layouts/            # MainLayout (responsive sidebar & top navigation)
-│   │   ├── pages/              # 10 Role-based dashboard views
-│   │   │   ├── LoginPage.jsx
-│   │   │   ├── DashboardPage.jsx
-│   │   │   ├── OrdersPage.jsx
-│   │   │   ├── OrderDetailPage.jsx
-│   │   │   ├── InventoryPage.jsx
-│   │   │   ├── BinLocationsPage.jsx
-│   │   │   ├── PickingPage.jsx
-│   │   │   ├── PickingTaskPage.jsx
-│   │   │   ├── PackingPage.jsx
-│   │   │   ├── PackingTaskPage.jsx
-│   │   │   ├── DispatchPage.jsx
-│   │   │   ├── AnalyticsPage.jsx
-│   │   │   ├── ActivityLogsPage.jsx
-│   │   │   ├── UsersPage.jsx
-│   │   │   └── SettingsPage.jsx
-│   │   ├── services/           # Axios API client (auth, orders, picking, packing, dispatch, etc.)
-│   │   ├── tests/              # 7 Vitest frontend component test suites
-│   │   ├── App.jsx             # React Router routing & ProtectedRoute
-│   │   ├── index.css           # Tailwind CSS directives & theme utilities
-│   │   ├── main.jsx            # Application entrypoint
-│   │   └── setupTests.js       # Testing library DOM matchers
-│   ├── Dockerfile              # Multi-stage production build (Node + Nginx)
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.js
+```text
+STOCKPILOT/
 │
 ├── backend/
-│   ├── app/
-│   │   ├── middleware/         # auth.py (JWT verification & @require_roles decorator)
-│   │   ├── models/             # 15 SQLAlchemy database models
-│   │   │   ├── user.py         # User, Role
-│   │   │   ├── product.py      # Product, InventoryTransaction
-│   │   │   ├── bin_location.py # BinLocation
-│   │   │   ├── order.py        # Order, OrderItem, OrderStatusHistory
-│   │   │   ├── picking.py      # PickingTask, PickingItem
-│   │   │   ├── packing.py      # PackingRecord, PackingItem
-│   │   │   ├── dispatch.py     # DispatchRecord
-│   │   │   └── activity.py     # ActivityLog, ErrorRecord
-│   │   ├── routes/             # REST blueprints (auth, dashboard, orders, inventory, picking, etc.)
-│   │   └── utils/              # logger.py, seed_data.py
-│   ├── tests/                  # 8 Pytest backend test suites (17 tests)
-│   ├── config.py               # Flexible database & environment configurations
-│   ├── requirements.txt        # Backend dependencies
-│   ├── run.py                  # API server startup & auto-seed runner
-│   └── Dockerfile              # Production Python container (Gunicorn)
+│   ├── app.py
+│   ├── requirements.txt
+│   └── ...
 │
-├── .github/
-│   └── workflows/
-│       └── ci.yml              # GitHub Actions CI pipeline
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── ...
 │
-├── docker-compose.yml          # Container orchestration (Frontend + Backend + Volume)
-├── .dockerignore
-├── .gitignore
-├── .env.example
-├── vercel.json                 # Vercel SPA rewrites configuration
-└── README.md
+├── README.md
+└── .gitignore
 ```
 
----
+*Note: The structure above illustrates the main application components. Your actual folder structure may contain additional files and directories.*
 
-## 7. Local Development Setup
+## Installation and Setup
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+ and npm
+
+Make sure the following software is installed:
+
+- Python
+- Node.js and npm
+- Git
+- MongoDB Atlas account
+- Visual Studio Code
 
 ### 1. Clone the Repository
+
 ```bash
-git clone https://github.com/your-username/stockpilot.git
-cd stockpilot
+git clone https://github.com/Devin-King10/STOCKPILOT.git
+```
+
+Navigate into the project directory:
+
+```bash
+cd STOCKPILOT
 ```
 
 ### 2. Backend Setup
+
+Navigate to the backend directory:
+
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# Windows:
-.\venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the Flask server (auto-creates and seeds SQLite database on first run)
-python run.py
 ```
-*The backend API will start on `http://localhost:5000`.*
+
+Create a Python virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate the virtual environment on Windows:
+
+```powershell
+.venv\Scripts\activate
+```
+
+Install the required dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Configure the required environment variables before running the backend.
+
+Start the Flask application:
+
+```bash
+python app.py
+```
 
 ### 3. Frontend Setup
-Open a new terminal:
+
+Open another terminal and navigate to the frontend directory:
+
 ```bash
 cd frontend
+```
 
-# Install npm dependencies
+Install the dependencies:
+
+```bash
 npm install
+```
 
-# Start Vite development server
+Configure the frontend API URL using the environment variable:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:5000/api
+```
+
+Start the React development server:
+
+```bash
 npm run dev
 ```
-*Open `http://localhost:3000` in your browser. The Vite development proxy forwards all `/api` requests to `http://127.0.0.1:5000`.*
+
+The frontend and backend can now run locally.
+
+## Environment Variables
+
+Environment variables are used to configure the application securely.
+
+### Backend Environment Variables
+
+| Variable | Description |
+|---|---|
+| SECRET_KEY | Secret key used for application security. |
+| CORS_ORIGINS | Allowed frontend origins. |
+| MONGO_URI | MongoDB connection string, if required by the backend configuration. |
+
+### Frontend Environment Variables
+
+| Variable | Description |
+|---|---|
+| VITE_API_BASE_URL | Backend API base URL. |
+
+**Important:** Never upload secret keys, database credentials, or `.env` files containing sensitive information to GitHub.
+
+## Deployment
+
+StockPilot uses cloud platforms to deploy its frontend and backend independently.
+
+### Backend Deployment – Render
+
+1. Push the backend source code to GitHub.
+2. Create a new Web Service on Render.
+3. Connect the STOCKPILOT GitHub repository.
+4. Set the Root Directory to `backend`.
+5. Configure the build command:
+
+```bash
+pip install -r requirements.txt
+```
+
+6. Configure the start command:
+
+```bash
+gunicorn -w 4 -b 0.0.0.0:$PORT run:app
+```
+
+7. Add the required environment variables.
+8. Deploy the backend.
+
+### Frontend Deployment – Vercel
+
+1. Connect the STOCKPILOT GitHub repository to Vercel.
+2. Configure the frontend root directory.
+3. Add the `VITE_API_BASE_URL` environment variable with the deployed backend API URL.
+4. Deploy the frontend.
+
+## DevOps Practices
+
+The project incorporates the following DevOps practices:
+
+- Version control using Git and GitHub.
+- Application deployment using Render and Vercel.
+- Environment-based application configuration.
+- Backend dependency management using Python requirements.
+- Frontend dependency management using npm.
+- Separation of frontend and backend services.
+- Cloud-based application hosting.
+
+## Expected Benefits
+
+- Reduced warehouse picking mistakes.
+- Improved packing verification.
+- Better order visibility and tracking.
+- Faster order fulfilment.
+- Organized warehouse bin locations.
+- Improved dispatch management.
+- Better monitoring of warehouse performance.
+
+## Future Enhancements
+
+- Barcode scanning integration.
+- Automated inventory updates.
+- Advanced warehouse analytics.
+- Email and notification integration.
+- Role-based authentication and authorization.
+- Automated testing and CI/CD pipeline integration.
+
+## Author
+
+**Devin Kingsly**
+
+GitHub: [Devin-King10](https://github.com/Devin-King10)
+
+## Repository
+
+[STOCKPILOT – GitHub Repository](https://github.com/Devin-King10/STOCKPILOT)
 
 ---
 
-## 8. Running with Docker & Docker Compose
-
-Run the entire full-stack system with a single command:
-
-```bash
-docker compose up --build
-```
-
-- **Frontend**: Available at `http://localhost:3000` (Served via optimized Nginx container with SPA routing fallback).
-- **Backend**: Available at `http://localhost:5000` (Running multi-worker Gunicorn server).
-- **Database Persistence**: SQLite database is persisted in a mounted Docker volume at `./backend/data`.
-
-To stop the containers:
-```bash
-docker compose down
-```
-
----
-
-## 9. Automated Testing
-
-### Backend Tests (Pytest)
-Run the 17 unit and integration tests covering authentication, permissions, inventory updates, barcode checks, picking limits, packing checklists, dispatch flows, and analytics calculations:
-
-```bash
-cd backend
-pytest tests -v
-```
-
-### Frontend Tests (Vitest)
-Run the 12 frontend component tests covering login validation, dashboard KPIs, order lists, inventory catalogs, picking task lists, packing verification, and dispatch queues:
-
-```bash
-cd frontend
-npm test
-```
-
-### Production Build Verification
-Verify that the React frontend builds with zero errors:
-```bash
-cd frontend
-npm run build
-```
-
----
-
-## 10. Production Deployment (Vercel & Render)
-
-### Frontend on Vercel
-1. Push your repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Select the `stockpilot` repository.
-4. Set **Root Directory** to `frontend`.
-5. Under **Environment Variables**, add:
-   ```env
-   VITE_API_URL=https://your-stockpilot-backend.onrender.com
-   ```
-6. Click **Deploy**. Vercel will build the frontend using `vercel.json` for seamless client-side React Router navigation.
-
-### Backend on Render (or Railway / Fly.io)
-1. In [Render](https://render.com), create a new **Web Service**.
-2. Connect your GitHub repository.
-3. Configure the service:
-   - **Root Directory**: `backend`
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 run:app`
-4. Set Environment Variables:
-   ```env
-   SECRET_KEY=generate-a-strong-random-secret
-   JWT_SECRET=generate-a-strong-jwt-secret
-   CORS_ORIGINS=https://your-stockpilot-frontend.vercel.app,http://localhost:3000
-   DATABASE_URL=postgresql://user:password@host:5432/stockpilot_db
-   ```
-5. *(Optional Production Database)*: Attach a Render Managed PostgreSQL database and paste the Internal Database URL into `DATABASE_URL`. SQLAlchemy automatically handles PostgreSQL connection strings.
-
----
-
-## 11. API Endpoints Reference
-
-### Authentication
-- `POST /api/auth/login` – Authenticate with username/email & password, receive JWT.
-- `GET /api/auth/me` – Retrieve authenticated user profile and permissions.
-- `POST /api/auth/register` – Register a new staff user.
-- `PUT /api/auth/profile` – Update user profile.
-- `POST /api/auth/change-password` – Update account password.
-
-### Dashboard & Analytics
-- `GET /api/dashboard/stats` – 8 KPI counts and accuracy percentages.
-- `GET /api/dashboard/charts` – Daily fulfillment trends and status distribution.
-- `GET /api/dashboard/recent-orders` – Recent order intake list.
-- `GET /api/dashboard/delayed-orders` – Delayed orders notification queue (>24h).
-- `GET /api/dashboard/low-stock-alerts` – Items below minimum threshold.
-- `GET /api/analytics/summary?period={today|7d|30d|all}` – Cycle times, throughput, leaderboards.
-- `GET /api/analytics/export/{orders|inventory|fulfillment|errors}` – Download operational CSV reports.
-
-### Orders
-- `GET /api/orders` – List orders with search, status, and priority filters.
-- `POST /api/orders` – Create customer order with stock reservation.
-- `GET /api/orders/:id` – Full order details with items, timeline, and history.
-- `PUT /api/orders/:id` – Edit customer and order details.
-- `POST /api/orders/:id/assign-picker` – Assign picker and create picking task.
-- `POST /api/orders/:id/hold` – Put active order on hold.
-- `POST /api/orders/:id/resume` – Resume held order back to workflow.
-- `POST /api/orders/:id/cancel` – Cancel order and release reserved stock.
-
-### Inventory & Bin Locations
-- `GET /api/inventory/products` – Product list with category and stock filters.
-- `POST /api/inventory/products` – Create new product with barcode and SKU.
-- `PUT /api/inventory/products/:id` – Update product specifications.
-- `DELETE /api/inventory/products/:id` – Remove product (if unreserved).
-- `POST /api/inventory/products/:id/adjust-stock` – Adjust stock quantity and log transaction.
-- `POST /api/inventory/lookup-barcode` – Find product by manual barcode entry.
-- `GET /api/inventory/bin-locations` – List all warehouse bins with capacities.
-- `POST /api/inventory/bin-locations` – Create new warehouse bin location.
-
-### Picking Workflow
-- `GET /api/picking/tasks` – List assigned picking tasks.
-- `GET /api/picking/tasks/:id` – Task item details and bin locations.
-- `POST /api/picking/tasks/:id/start` – Start picking execution.
-- `POST /api/picking/tasks/:id/verify-barcode` – Validate barcode against item SKU.
-- `POST /api/picking/tasks/:id/confirm-item` – Confirm picked quantity.
-- `POST /api/picking/tasks/:id/report-error` – Log missing or damaged item.
-- `POST /api/picking/tasks/:id/complete` – Complete picking and queue for packing.
-
-### Packing Workflow
-- `GET /api/packing/tasks` – List orders ready for packaging.
-- `GET /api/packing/tasks/:id` – Packing inspection details.
-- `POST /api/packing/tasks/:id/start` – Begin packing inspection.
-- `POST /api/packing/tasks/:id/verify-item` – Verify line item condition.
-- `PUT /api/packing/tasks/:id/checklist` – Update 5-point checklist state.
-- `POST /api/packing/tasks/:id/report-error` – Report packaging or item defects.
-- `POST /api/packing/tasks/:id/complete` – Enforce checklist, save dimensions/weight, stage for dispatch.
-
-### Dispatch Workflow
-- `GET /api/dispatch?tab={ready|history}` – Ready queue and dispatch history.
-- `POST /api/dispatch/confirm` – Assign courier, record tracking number, confirm dispatch.
-- `GET /api/dispatch/summary/:order_id` – Printable dispatch summary note.
-- `POST /api/dispatch/:order_id/deliver` – Mark shipment as delivered.
-
-### User Management & Audit
-- `GET /api/users` – List staff users and roles.
-- `POST /api/users` – Create employee account.
-- `PUT /api/users/:id` – Update user details or active status.
-- `GET /api/activity/logs` – Chronological warehouse activity audit trail.
-- `GET /api/activity/errors` – Discrepancy incidents list.
-- `POST /api/activity/errors/:id/resolve` – Resolve error incident with action notes.
-
----
-
-## 12. Pushing to GitHub
-
-To push this complete project to your GitHub repository:
-
-```bash
-# Initialize git (if not already initialized)
-git init
-
-# Add all project files
-git add .
-
-# Commit changes
-git commit -m "Initial release of StockPilot: Full-stack Warehouse Management System"
-
-# Link to your remote GitHub repository
-git branch -M main
-git remote add origin https://github.com/<your-username>/stockpilot.git
-
-# Push to GitHub
-git push -u origin main
-```
-
----
-
-## 13. License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-#   S T O C K P I L O T  
- 
+*StockPilot – Improving Warehouse Efficiency Through Smart Order Fulfilment Management.*
